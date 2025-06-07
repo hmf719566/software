@@ -1,0 +1,86 @@
+{
+  "info": {
+    "name": "消费者服务测试 (Service_Consumer_12000)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "获取用户信息",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:12000/cart/getUser/1",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "12000",
+          "path": ["cart", "getUser", "1"]
+        },
+        "description": "通过消费者服务获取ID为1的用户信息"
+      }
+    },
+    {
+      "name": "创建新用户",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userId\": 2,\n    \"userName\": \"李四\",\n    \"password\": \"654321\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:12000/cart/createUser",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "12000",
+          "path": ["cart", "createUser"]
+        },
+        "description": "通过消费者服务创建新用户"
+      }
+    },
+    {
+      "name": "更新用户",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"userName\": \"李四已更新\",\n    \"password\": \"updated654321\"\n}"
+        },
+        "url": {
+          "raw": "http://localhost:12000/cart/updateUser/2",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "12000",
+          "path": ["cart", "updateUser", "2"]
+        },
+        "description": "通过消费者服务更新ID为2的用户"
+      }
+    },
+    {
+      "name": "删除用户",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:12000/cart/deleteUser/2",
+          "protocol": "http",
+          "host": ["localhost"],
+          "port": "12000",
+          "path": ["cart", "deleteUser", "2"]
+        },
+        "description": "通过消费者服务删除ID为2的用户"
+      }
+    }
+  ]
+} 
