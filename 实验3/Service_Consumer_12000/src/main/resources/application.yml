@@ -1,0 +1,68 @@
+server:
+  port: 12000
+
+spring:
+  application:
+    name: "consumer-service"
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: "${spring.cloud.client.ip-address}:${server.port}"
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+  client:
+    service-url:
+      defaultZone: "http://eurekaServer18000:18000/eureka/,http://eurekaServer18001:18001/eureka/,http://eurekaServer18002:18002/eureka/"
+
+resilience4j.circuitbreaker:
+  configs:
+    default: # 默认配置，可以被 instances 覆盖
+      registerHealthIndicator: true
+      slidingWindowType: COUNT_BASED
+      slidingWindowSize: 10
+      minimumNumberOfCalls: 5
+      failureRateThreshold: 50 # 50% 失败率
+      waitDurationInOpenState: 5s # OPEN 状态持续时间
+      permittedNumberOfCallsInHalfOpenState: 2 # HALF_OPEN 状态允许的请求数
+
+  instances:
+    # 定义断路器实例 A，命名为 'circuitA'
+    circuitA:
+      # (继承 default 配置)
+      failureRateThreshold: 30 # A 要求: OPEN状态的失败率阈值为30%
+      slidingWindowType: TIME_BASED # A 要求: 滑动窗口类型为时间窗口型
+      slidingWindowSize: 10 # A 要求: 滑动窗口长度为10秒
+      minimumNumberOfCalls: 5 # A 要求: 最小请求数为5
+      waitDurationInOpenState: 5s # A 要求: 从OPEN到HALF_OPEN的等待时间为5秒
+      permittedNumberOfCallsInHalfOpenState: 3 # A 要求: HALF_OPEN状态允许的请求数为3
+    circuitB:
+      failureRateThreshold: 50 # B 要求: 失败率阈值 50%
+      slowCallRateThreshold: 30 # B 要求: 慢调用阈值 30%
+      slowCallDurationThreshold: 2s # B 要求: 慢调用时间阈值 2秒
+      slidingWindowType: TIME_BASED # B 要求: 时间窗口
+      slidingWindowSize: 10 # B 要求: 窗口长度 10秒
+      minimumNumberOfCalls: 5 # B 要求: 最小请求数 5
+      waitDurationInOpenState: 5s # B 要求: OPEN -> HALF_OPEN 等待时间 5秒
+      permittedNumberOfCallsInHalfOpenState: 3 # B 要求: HALF_OPEN 允许请求数 3
+
+  bulkhead:
+    instances:
+      # 定义一个名为 'backendC' 的隔离器实例
+      backendC:
+        #  最大并发执行数为 10
+        maxConcurrentCalls: 10
+        # 当达到最大并发数时，新的请求需要等待，最大等待时间为 20ms
+        maxWaitDuration: 20ms
+
+  ratelimiter:
+    instances:
+      # 定义一个名为 'backendD' 的限流器实例
+      backendD:
+        # 要求: 刷新周期为 2 秒
+        limitRefreshPeriod: 2s
+        #  要求: 周期内最大请求数为 5
+        limitForPeriod: 5
+        # 当请求被限流时，线程需要等待多久才能获取许可。
+        # 设置为 0 表示不等待，立即失败并触发降级。
+        timeoutDuration: 0s
