@@ -1,0 +1,80 @@
+server:
+  port: 13000
+spring:
+  application:
+    name: "gateway-service"
+  cloud:
+    gateway:
+      routes:
+        - id: consumerService
+          uri: lb://consumer-service
+          predicates:
+            - Path=/cart/getCartById/**
+          filters:
+            # --- 过滤器 1: 断路器 ---
+            - name: CircuitBreaker
+              args:
+                name: consumerFallback # 断路器实例名
+                fallbackUri: 'forward:/fallback/consumer' # 降级 URI
+            # --- 过滤器 2: 基于Redis的请求限流器 ---
+            - name: RequestRateLimiter
+              args:
+                # 令牌桶每秒补充的速率
+                redis-rate-limiter.replenishRate: 10
+                # 令牌桶的总容量（允许的瞬时并发量）
+                redis-rate-limiter.burstCapacity: 20
+        - id: providerService
+          uri: lb://provider-service
+          predicates:
+            - Path=/user/getUserById/**
+          filters:
+            - name: CircuitBreaker
+              args:
+                name: providerFallback
+                fallbackUri: 'forward:/fallback/provider'
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:8080"
+              - "http://localhost:3000"
+              # 添加其他您需要支持的前端域名
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - OPTIONS
+            allowedHeaders: "*"
+            allowCredentials: true
+            maxAge: 3600
+
+
+
+
+eureka:
+  instance:
+    prefer-ip-address: true
+    instance-id: "${spring.cloud.client.ip-address}:${server.port}"
+    lease-renewal-interval-in-seconds: 5
+    lease-expiration-duration-in-seconds: 15
+  client:
+    service-url:
+      defaultZone: "http://eurekaServer18000:18000/eureka/,http://eurekaServer18001:18001/eureka/,http://eurekaServer18002:18002/eureka/"
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      # 为 consumerService 路由定义的断路器
+      consumerFallback:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 10s
+
+      # 为 providerService 路由定义的断路器
+      providerFallback:
+        failureRateThreshold: 50
+        minimumNumberOfCalls: 5
+        slidingWindowSize: 10
+        waitDurationInOpenState: 10s
