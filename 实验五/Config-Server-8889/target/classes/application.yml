@@ -1,0 +1,60 @@
+server:
+  port: 8889
+
+spring:
+  application:
+    name: config-server
+  profiles:
+    active: ${CONFIG_PROFILE:git}  # 默认使用git配置，可通过环境变量切换
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration
+      - org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration
+  cloud:
+    config:
+      server:
+        git:
+          uri: https://gitee.com/yunnan-university_13_0/config.git
+          default-label: master
+          search-paths: '{application}'
+          clone-on-start: true  # 启动时克隆
+          timeout: 15  # 连接超时时间(秒)
+          force-pull: true  # 强制拉取
+      # 启用DiscoveryClient支持
+      discovery:
+        enabled: true
+  # RabbitMQ配置 (用于Spring Cloud Bus)
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+# Eureka客户端配置
+eureka:
+  client:
+    service-url:
+      defaultZone: http://eurekaServer18000:18000/eureka/,http://eurekaServer18001:18001/eureka/,http://eurekaServer18002:18002/eureka/
+    fetch-registry: true
+    register-with-eureka: true
+  instance:
+    prefer-ip-address: true
+    instance-id: ${spring.application.name}:${server.port}  # 实例ID
+    lease-renewal-interval-in-seconds: 10  # 心跳间隔
+    lease-expiration-duration-in-seconds: 30  # 超时时间
+
+# 管理端点配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"  # 暴露所有端点，包括/bus-refresh
+  endpoint:
+    health:
+      show-details: always
+
+# 日志配置
+logging:
+  level:
+    org.springframework.cloud.config: debug
+    org.springframework.cloud.bus: debug 
